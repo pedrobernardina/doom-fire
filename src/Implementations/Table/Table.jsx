@@ -11,28 +11,31 @@ class Table extends Component {
   constructor() {
     super();
 
-    this.rows = 50;
-    this.columns = 50;
+    this.rows = 40;
+    this.columns = 40;
+    this.Fire = Fire(this.rows, this.columns);
 
-    const fireState = Fire.createState(this.rows, this.columns);
+    const fireState = this.Fire.createState();
     this.state = { fireState };
   }
 
   componentDidMount() {
     this.createFireSource();
-    setInterval(this.propagateFire.bind(this), 50);
+    this.interval = setInterval(this.propagateFire.bind(this), 50);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.interval);
   }
 
   createFireSource() {
-    const { fireState } = this.state;
-    const newFireState = Fire.createFireSource(fireState);
-    this.setState(() => ({ fireState: newFireState }));
+    const fireState = this.Fire.createFireSource();
+    this.setState(() => ({ fireState }));
   }
 
   propagateFire() {
-    const { fireState } = this.state;
-    const newFireState = Fire.propagateFire(fireState);
-    this.setState(() => ({ fireState: newFireState }));
+    const fireState = Fire.propagateFire();
+    this.setState(() => ({ fireState }));
   }
 
   render() {
@@ -43,21 +46,26 @@ class Table extends Component {
       <div className={classNames('table-wrap', { border: debug })}>
         <table className='table'>
           <tbody>
-            {fireState.map((row, i) => (
+            {Array(this.rows).fill(0).map((row, i) => (
               <tr key={`row-${i}`}>
-                {row.map((d, j) => {
+                {Array(this.columns).fill(0).map((column, j) => {
                   const cellIndex = (i * this.columns) + j;
-                  const intensity = fireState[i][j];
+                  const intensity = fireState[cellIndex];
                   const rgbColour = ColourPallete[intensity];
-                  const backgroundColor = `rgb(${rgbColour.r}, ${rgbColour.g}, ${rgbColour.b})`;
+                  const backgroundColor = debug ? 'transparent' : `rgb(${rgbColour.r}, ${rgbColour.g}, ${rgbColour.b})`;
 
                   return (
                     <td
                       className={classNames('cell', { border: debug })}
                       key={`column-${i}-${j}`}
-                      style={{ backgroundColor }}
+                      style={{
+                        backgroundColor,
+                        height: debug ? 50 : 2,
+                        width: debug ? 50 : 2,
+                      }}
                     >
                       {debug && (<div className='cell-index'>{cellIndex}</div>)}
+                      {debug && intensity}
                     </td>
                   );
                 })}

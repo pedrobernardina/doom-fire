@@ -1,29 +1,51 @@
-const createState = (rows, columns) => Array(rows).fill().map(() => Array(columns).fill(0));
+const Fire = (rows, columns) => {
+  let state = [];
 
-const createFireSource = (fireState) => {
-  const columns = fireState[0].length;
-  const initialRow = Array(columns).fill(36);
-  return [...fireState.slice(0, -1), initialRow];
-};
+  Fire.createState = () => {
+    state = Array(rows * columns).fill(0);
+    return state;
+  };
 
-const propagateFire = (fireState) => {
-  const newState = [...fireState];
-  const rows = fireState.length;
+  Fire.createFireSource = () => {
+    const newState = state.map((d, i) => {
+      const offset = (rows - 1) * columns;
+      if(i < offset) { return d; }
+      return 36;
+    });
 
-  for(const [i, row] of newState.entries()) {
-    if(i === rows - 1) { continue; }
+    state = newState;
+    return state;
+  };
 
-    for(const [j] of row.entries()) {
-      const intensity = newState[i + 1][j];
-      newState[i][j] = intensity - 1 >= 0 ? intensity - 1 : 0;
+  Fire.propagateFire = (random = true, wind = true) => {
+    const newState = [...state];
+
+    for(let j = 0; j < columns; j += 1) {
+      for(let i = 0; i < rows; i += 1) {
+        const decay = random ? Math.floor(Math.random() * 3) : 1;
+        const currentIndex = (i * columns) + j;
+        const lastRowIndex = (rows - 1) * columns;
+        if (currentIndex >= lastRowIndex) { continue; }
+
+        const intensity = state[currentIndex + columns] - decay; // pixel below
+
+        if(wind) {
+          newState[currentIndex - decay] = intensity >= 0 ? intensity : 0;
+        }
+        else {
+          newState[currentIndex] = intensity >= 0 ? intensity : 0;
+        }
+      }
     }
-  }
 
-  return newState;
+    state = newState;
+    return state;
+  };
+
+  Fire.rows = () => rows;
+  Fire.columns = () => columns;
+
+  return Fire;
 };
 
-export default {
-  createState,
-  createFireSource,
-  propagateFire,
-};
+export default Fire;
